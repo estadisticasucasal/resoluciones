@@ -1,0 +1,401 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Buscador de Resoluciones UCASAL</title>
+<meta name="description" content="Búsqueda por tema sobre el texto completo de las resoluciones rectorales de UCASAL (2015–2026).">
+<style>
+  :root {
+    --azul: #003366;
+    --azul-claro: #0a4f99;
+    --acento: #f0a500;
+    --fondo: #f4f6f9;
+    --tarjeta: #ffffff;
+    --borde: #e2e6ea;
+    --texto: #1d2733;
+    --tenue: #5a6b7b;
+    --sombra: 0 1px 3px rgba(16, 35, 55, .08), 0 1px 2px rgba(16, 35, 55, .06);
+    --radio: 10px;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --fondo: #0f1722; --tarjeta: #18202c; --borde: #29333f;
+      --texto: #e7edf3; --tenue: #9fb0c0; --azul: #0a4f99; --azul-claro: #1565c0;
+      --sombra: 0 1px 3px rgba(0,0,0,.4);
+    }
+  }
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body {
+    font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    margin: 0; color: var(--texto); background: var(--fondo);
+    line-height: 1.5; -webkit-font-smoothing: antialiased;
+  }
+  header {
+    background: linear-gradient(135deg, var(--azul) 0%, var(--azul-claro) 100%);
+    color: #fff; padding: 1.6rem 1rem 1.4rem;
+  }
+  .head-inner { max-width: 860px; margin: 0 auto; }
+  header h1 { margin: 0; font-size: 1.45rem; font-weight: 700; letter-spacing: -.01em; }
+  header p { margin: .3rem 0 0; font-size: .9rem; opacity: .85; }
+
+  main { max-width: 860px; margin: 0 auto; padding: 1.2rem 1rem 3rem; }
+
+  .barra {
+    display: flex; gap: .55rem; flex-wrap: wrap;
+    position: sticky; top: .6rem; z-index: 10;
+    background: var(--tarjeta); padding: .7rem; border-radius: var(--radio);
+    box-shadow: var(--sombra); border: 1px solid var(--borde);
+  }
+  #q {
+    flex: 1 1 300px; padding: .65rem .85rem; font-size: 1rem;
+    border: 1px solid var(--borde); border-radius: 8px; background: var(--fondo); color: var(--texto);
+    transition: border-color .15s, box-shadow .15s;
+  }
+  #q:focus, select:focus, button:focus-visible {
+    outline: none; border-color: var(--azul-claro);
+    box-shadow: 0 0 0 3px rgba(10, 79, 153, .18);
+  }
+  select {
+    padding: .65rem .8rem; font-size: 1rem; border-radius: 8px;
+    border: 1px solid var(--borde); background: var(--fondo); color: var(--texto); cursor: pointer;
+  }
+  button {
+    padding: .65rem 1.2rem; font-size: 1rem; font-weight: 600; border-radius: 8px;
+    background: var(--azul); color: #fff; border: none; cursor: pointer;
+    transition: background .15s, transform .05s;
+  }
+  button:hover { background: var(--azul-claro); }
+  button:active { transform: translateY(1px); }
+
+  .ayuda { font-size: .82rem; color: var(--tenue); margin: .7rem .2rem .2rem; }
+  .ayuda code {
+    background: var(--tarjeta); border: 1px solid var(--borde);
+    padding: .08rem .35rem; border-radius: 5px; font-size: .9em;
+  }
+
+  #estado { color: var(--tenue); font-size: .9rem; margin: 1.1rem .2rem .6rem; min-height: 1.2em; }
+
+  .item {
+    background: var(--tarjeta); border: 1px solid var(--borde); border-radius: var(--radio);
+    padding: .9rem 1.1rem; margin-bottom: .75rem; box-shadow: var(--sombra);
+    transition: transform .12s, box-shadow .12s, border-color .12s;
+    animation: aparecer .25s ease both;
+  }
+  .item:hover {
+    transform: translateY(-1px); border-color: var(--azul-claro);
+    box-shadow: 0 4px 12px rgba(16, 35, 55, .12);
+  }
+  @keyframes aparecer { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+
+  .item-head { display: flex; align-items: baseline; gap: .5rem; flex-wrap: wrap; }
+  .item a {
+    color: var(--azul-claro); font-weight: 600; text-decoration: none; font-size: 1.02rem;
+    display: inline-flex; align-items: center; gap: .35rem;
+  }
+  .item a:hover { text-decoration: underline; }
+  .badge {
+    font-size: .72rem; font-weight: 600; color: var(--azul-claro);
+    background: rgba(10, 79, 153, .1); border-radius: 20px; padding: .12rem .55rem; white-space: nowrap;
+  }
+  .ocr {
+    font-size: .68rem; color: var(--tenue); background: var(--fondo);
+    border: 1px solid var(--borde); border-radius: 20px; padding: .12rem .5rem;
+  }
+  .meta { color: var(--tenue); font-size: .82rem; margin: .3rem 0 .45rem; }
+  .frag { font-size: .93rem; color: var(--texto); opacity: .92; }
+  mark { background: var(--acento); color: #1d2733; border-radius: 3px; padding: 0 .1rem; }
+
+  .vacio { text-align: center; color: var(--tenue); padding: 2.5rem 1rem; }
+  .spinner {
+    display: inline-block; width: 1rem; height: 1rem; vertical-align: -2px; margin-right: .4rem;
+    border: 2px solid var(--borde); border-top-color: var(--azul-claro); border-radius: 50%;
+    animation: girar .7s linear infinite;
+  }
+  @keyframes girar { to { transform: rotate(360deg); } }
+
+  footer { max-width: 860px; margin: 0 auto; padding: 0 1rem 2rem; color: var(--tenue); font-size: .78rem; }
+</style>
+
+<link rel="icon" href="data:,">
+<style>
+  .item-head a.sin-link { color: var(--texto); cursor: default; }
+  .item-head a.sin-link:hover { text-decoration: none; }
+  .acciones { margin-top: .5rem; display: flex; gap: .8rem; flex-wrap: wrap; }
+  .acciones button {
+    background: none; border: 1px solid var(--borde); color: var(--azul-claro);
+    font-size: .8rem; font-weight: 600; padding: .25rem .7rem; border-radius: 20px;
+  }
+  .acciones button:hover { background: rgba(10, 79, 153, .08); }
+  .aviso {
+    background: #fff4e5; border: 1px solid #f0c98a; color: #6b4a12;
+    border-radius: var(--radio); padding: .8rem 1rem; margin: 1rem 0 0; font-size: .9rem;
+  }
+  .aviso a { color: #8a5a00; font-weight: 600; }
+  .aviso code { background: rgba(0,0,0,.06); padding: .08rem .35rem; border-radius: 5px; }
+  @media (prefers-color-scheme: dark) {
+    .aviso { background: #3a2c12; border-color: #6b5220; color: #f2dfbc; }
+    .aviso a { color: #ffc861; }
+  }
+  .completo {
+    margin-top: .6rem; padding: .7rem .8rem; background: var(--fondo);
+    border: 1px solid var(--borde); border-radius: 8px;
+    font-size: .86rem; white-space: pre-wrap; max-height: 26rem; overflow: auto;
+  }
+</style>
+</head>
+<body>
+<header>
+  <div class="head-inner">
+    <h1>Buscador de Resoluciones UCASAL</h1>
+    <p>Búsqueda por tema sobre el texto completo de las resoluciones rectorales.</p>
+  </div>
+</header>
+<main>
+  <form class="barra" onsubmit="buscar(event)" role="search">
+    <input id="q" type="search" placeholder="Buscar por tema (ej: becas, posgrado, licencia...)"
+           autofocus autocomplete="off" aria-label="Buscar por tema">
+    <select id="anio" aria-label="Filtrar por año">
+      <option value="">Todos los años</option>
+    </select>
+    <button type="submit">Buscar</button>
+  </form>
+  <div class="ayuda">
+    <code>"frase exacta"</code> &middot; <code>-excluir</code> término o <code>-"frase"</code> &middot;
+    varios términos = todos deben aparecer
+  </div>
+  <div id="aviso" class="aviso" role="alert" hidden></div>
+  <div id="estado" aria-live="polite"></div>
+  <div id="resultados"></div>
+</main>
+<footer>
+  <span id="pie">Índice de resoluciones publicadas por UCASAL.</span>
+  La búsqueda corre en tu navegador: se descargan solo los fragmentos del índice que hacen falta.
+</footer>
+
+<script src="vendor/index.js"></script>
+<script>
+const $q = document.getElementById('q');
+const $anio = document.getElementById('anio');
+const $estado = document.getElementById('estado');
+const $cont = document.getElementById('resultados');
+const $pie = document.getElementById('pie');
+let ultimaPeticion = 0;
+let workerProm = null;
+
+function escapar(s) {
+  return (s || '').replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+}
+
+// --- base ---------------------------------------------------------------
+// Las rutas van absolutas: dentro del worker, una relativa se resolveria
+// contra vendor/ (donde vive el worker) y no contra la pagina.
+function url(rel) { return new URL(rel, location.href).href; }
+
+function base() {
+  if (!workerProm) {
+    workerProm = createDbWorker(
+      [{ from: 'jsonconfig', configUrl: url('db/config.json') }],
+      url('vendor/sqlite.worker.js'),
+      url('vendor/sql-wasm.wasm')
+    );
+  }
+  return workerProm;
+}
+
+async function cargarAnios() {
+  try {
+    const w = await base();
+    const filas = await w.db.query('SELECT anio, n FROM anios ORDER BY anio DESC');
+    let total = 0;
+    for (const f of filas) {
+      total += f.n;
+      const o = document.createElement('option');
+      o.value = f.anio;
+      o.textContent = f.anio;
+      $anio.appendChild(o);
+    }
+    $pie.textContent = total.toLocaleString('es-AR') + ' resoluciones indexadas (' +
+      filas[filas.length - 1].anio + '\u2013' + filas[0].anio + ').';
+  } catch (e) {
+    console.error(e);
+    avisar(e);
+  }
+}
+
+const SITIO = 'https://estadisticasucasal.github.io/resoluciones/';
+
+/** Un fallo al abrir el indice deja el filtro de años vacío y la búsqueda muda,
+ *  asi que conviene decir en pantalla que pasó en vez de fallar en silencio. */
+function avisar(e) {
+  const $aviso = document.getElementById('aviso');
+  if (location.protocol === 'file:') {
+    $aviso.innerHTML = 'Esta página está abierta como archivo local ' +
+      '(<code>file://</code>) y así no puede funcionar: el navegador bloquea los Web ' +
+      'Workers y los pedidos por rango que necesita la base. Abrila desde ' +
+      '<a href="' + SITIO + '">' + SITIO + '</a>.';
+  } else {
+    $aviso.innerHTML = 'No se pudo abrir el índice de resoluciones. ' +
+      'Detalle: <code>' + escapar(String((e && e.message) || e)) + '</code>';
+  }
+  $aviso.hidden = false;
+  $estado.textContent = '';
+}
+
+// --- consulta -----------------------------------------------------------
+const RE_TOKEN = /(-)?"([^"]+)"|(-)?(\S+)/g;
+const RE_PALABRA = /[\p{L}\p{N}_]+/gu;
+
+/** Traduce la busqueda del usuario a una query FTS5 segura.
+ *  Misma sintaxis que la version Flask: "frase", -excluir, AND por defecto. */
+function ftsQuery(q) {
+  const pos = [], neg = [], terminos = [];
+  for (const m of q.matchAll(RE_TOKEN)) {
+    let term, negado, crudo;
+    if (m[2] !== undefined) {
+      crudo = m[2];
+      const palabras = crudo.match(RE_PALABRA);
+      if (!palabras) continue;
+      term = '"' + palabras.join(' ') + '"';
+      negado = m[1] === '-';
+    } else {
+      crudo = m[4];
+      if (crudo === '*') continue;
+      const palabras = crudo.match(RE_PALABRA);
+      if (!palabras) continue;
+      term = '"' + palabras.join(' ') + '"*';
+      negado = m[3] === '-';
+    }
+    (negado ? neg : pos).push(term);
+    if (!negado) terminos.push(crudo);
+  }
+  if (!pos.length) return { match: '', terminos: [] };
+  return { match: pos.join(' ') + neg.map(t => ' NOT ' + t).join(''), terminos };
+}
+
+// --- texto comprimido ---------------------------------------------------
+async function inflar(bytes) {
+  const s = new Blob([bytes]).stream().pipeThrough(new DecompressionStream('deflate'));
+  return new TextDecoder('utf-8').decode(await new Response(s).arrayBuffer());
+}
+
+/** Copia sin acentos y en minusculas, caracter a caracter, para que los
+ *  indices coincidan con el texto original (la FTS ignora diacriticos). */
+function plano(s) {
+  let r = '';
+  for (const c of s) r += (c.normalize('NFD')[0] || c).toLowerCase();
+  return r;
+}
+
+function fragmento(texto, terminos) {
+  const buscados = terminos
+    .flatMap(t => t.match(RE_PALABRA) || [])
+    .map(t => plano(t))
+    .filter(t => t.length > 1);
+  const p = plano(texto);
+  let corte = -1;
+  for (const t of buscados) {
+    const i = p.indexOf(t);
+    if (i >= 0 && (corte < 0 || i < corte)) corte = i;
+  }
+  if (corte < 0) corte = 0;
+  const desde = Math.max(0, corte - 90);
+  const trozo = texto.slice(desde, desde + 320).replace(/\s+/g, ' ');
+  const pTrozo = plano(trozo);
+  const marcas = [];
+  for (const t of buscados) {
+    let i = pTrozo.indexOf(t);
+    while (i >= 0) { marcas.push([i, i + t.length]); i = pTrozo.indexOf(t, i + t.length); }
+  }
+  marcas.sort((a, b) => a[0] - b[0]);
+  let salida = '', ultimo = 0;
+  for (const par of marcas) {
+    if (par[0] < ultimo) continue;
+    salida += escapar(trozo.slice(ultimo, par[0])) + '<mark>' +
+              escapar(trozo.slice(par[0], par[1])) + '</mark>';
+    ultimo = par[1];
+  }
+  salida += escapar(trozo.slice(ultimo));
+  return (desde > 0 ? '\u2026 ' : '') + salida + ' \u2026';
+}
+
+const RE_ID_DRIVE = /^[A-Za-z0-9_-]{20,}$/;
+
+// --- busqueda -----------------------------------------------------------
+async function buscar(e) {
+  if (e) e.preventDefault();
+  const q = $q.value.trim();
+  const anio = $anio.value;
+  $cont.innerHTML = '';
+  if (!q) { $estado.textContent = ''; return; }
+  const consulta = ftsQuery(q);
+  if (!consulta.match) { $estado.textContent = 'Escribí al menos un término a buscar.'; return; }
+  $estado.innerHTML = '<span class="spinner"></span>Buscando...';
+  const id = ++ultimaPeticion;
+
+  let filas;
+  try {
+    const w = await base();
+    let sql = 'SELECT m.id, m.numero, m.nombre, m.anio, m.drive_id, m.ocr, m.txt ' +
+              'FROM res JOIN meta m ON m.id = res.rowid WHERE res MATCH ?';
+    const params = [consulta.match];
+    if (anio) { sql += ' AND m.anio = ?'; params.push(Number(anio)); }
+    sql += ' ORDER BY bm25(res), m.anio DESC, CAST(m.numero AS INTEGER) DESC LIMIT 100';
+    filas = await w.db.query(sql, params);
+  } catch (err) {
+    console.error(err);
+    if (id === ultimaPeticion) {
+      $estado.textContent = 'Error al buscar. Reintentá.';
+      avisar(err);
+    }
+    return;
+  }
+  if (id !== ultimaPeticion) return;
+
+  $estado.textContent = filas.length
+    ? filas.length + (filas.length === 100 ? '+' : '') + ' resultado(s)'
+    : '';
+  if (!filas.length) {
+    $cont.innerHTML = '<div class="vacio">Sin resultados para esa búsqueda.</div>';
+    return;
+  }
+
+  const frag = document.createDocumentFragment();
+  for (const f of filas) {
+    const div = document.createElement('div');
+    div.className = 'item';
+    const ocr = f.ocr ? '<span class="ocr" title="Texto obtenido por OCR de un escaneo">OCR</span>' : '';
+    const num = f.numero ? '<span class="badge">N&deg; ' + escapar(f.numero) + '</span>' : '';
+    const titulo = RE_ID_DRIVE.test(f.drive_id || '')
+      ? '<a href="https://drive.google.com/file/d/' + escapar(f.drive_id) +
+        '/view" target="_blank" rel="noopener">' + escapar(f.nombre) + '</a>'
+      : '<a class="sin-link">' + escapar(f.nombre) + '</a>';
+    div.innerHTML =
+      '<div class="item-head">' + titulo + num + ocr + '</div>' +
+      '<div class="meta">Año ' + escapar(String(f.anio)) + '</div>' +
+      '<div class="frag"></div>' +
+      '<div class="acciones"><button type="button">Ver texto completo</button></div>';
+    frag.appendChild(div);
+
+    inflar(f.txt).then(texto => {
+      div.querySelector('.frag').innerHTML = fragmento(texto, consulta.terminos);
+      div.querySelector('.acciones button').onclick = ev => {
+        const ya = div.querySelector('.completo');
+        if (ya) { ya.remove(); ev.target.textContent = 'Ver texto completo'; return; }
+        const pre = document.createElement('div');
+        pre.className = 'completo';
+        pre.textContent = texto;
+        div.appendChild(pre);
+        ev.target.textContent = 'Ocultar texto';
+      };
+    });
+  }
+  $cont.appendChild(frag);
+}
+
+$anio.addEventListener('change', function () { if ($q.value.trim()) buscar(); });
+cargarAnios();
+</script>
+</body>
+</html>
